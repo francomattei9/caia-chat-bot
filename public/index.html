@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caia Home — Asistente</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #faf7f2;
+    --warm-white: #f5f0e8;
+    --sand: #e8ddd0;
+    --camel: #c4956a;
+    --camel-dark: #a87850;
+    --camel-light: #e8c9a8;
+    --brown-soft: #8b6b52;
+    --text-dark: #2d2520;
+    --text-mid: #6b5a4e;
+    --text-light: #a89080;
+    --bubble-user: #c4956a;
+    --bubble-bot: #ffffff;
+    --shadow: 0 8px 40px rgba(100,70,50,0.12);
+  }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background-image: 
+      radial-gradient(ellipse at 20% 20%, rgba(196,149,106,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(196,149,106,0.06) 0%, transparent 60%);
+  }
+
+  .chat-wrapper {
+    width: 100%;
+    max-width: 420px;
+    height: 90vh;
+    max-height: 780px;
+    display: flex;
+    flex-direction: column;
+    background: var(--cream);
+    border-radius: 24px;
+    box-shadow: var(--shadow), 0 2px 0 rgba(196,149,106,0.2);
+    overflow: hidden;
+    border: 1px solid rgba(196,149,106,0.15);
+  }
+
+  .chat-header {
+    background: var(--text-dark);
+    padding: 20px 24px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  .header-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--camel), var(--camel-dark));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; color: white; font-weight: 300;
+    flex-shrink: 0; position: relative;
+  }
+
+  .online-dot {
+    position: absolute; bottom: 1px; right: 1px;
+    width: 10px; height: 10px;
+    background: #6dbf8a; border-radius: 50%;
+    border: 2px solid var(--text-dark);
+  }
+
+  .header-info h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400; font-size: 18px;
+    color: var(--camel-light); letter-spacing: 0.04em; line-height: 1.2;
+  }
+
+  .header-info p {
+    font-size: 11px; color: rgba(255,255,255,0.4);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-top: 2px; font-weight: 300;
+  }
+
+  .messages-area {
+    flex: 1; overflow-y: auto;
+    padding: 24px 20px 16px;
+    display: flex; flex-direction: column; gap: 12px;
+    scroll-behavior: smooth;
+  }
+
+  .messages-area::-webkit-scrollbar { width: 3px; }
+  .messages-area::-webkit-scrollbar-thumb { background: var(--sand); border-radius: 10px; }
+
+  .msg-row {
+    display: flex; align-items: flex-end; gap: 8px;
+    animation: msgIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .msg-row.user { flex-direction: row-reverse; }
+
+  .bot-mini-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--camel), var(--camel-dark));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    color: white; font-size: 13px; flex-shrink: 0; margin-bottom: 2px;
+  }
+
+  .bubble {
+    max-width: 78%; padding: 11px 15px; border-radius: 18px;
+    font-size: 14px; line-height: 1.55;
+  }
+
+  .bubble.bot {
+    background: var(--bubble-bot); color: var(--text-dark);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 12px rgba(100,70,50,0.08); font-weight: 300;
+  }
+
+  .bubble.user {
+    background: var(--bubble-user); color: white;
+    border-bottom-right-radius: 4px; font-weight: 400;
+  }
+
+  .bubble strong { font-weight: 500; color: var(--camel-dark); }
+  .bubble.user strong { color: rgba(255,255,255,0.9); }
+
+  .bubble ul { margin: 6px 0 4px; padding-left: 0; list-style: none; }
+  .bubble ul li { padding: 3px 0 3px 14px; position: relative; }
+  .bubble ul li::before {
+    content: '·'; position: absolute; left: 4px;
+    color: var(--camel); font-size: 18px; line-height: 1; top: 2px;
+  }
+
+  .timestamp {
+    font-size: 10px; color: var(--text-light);
+    margin-top: 3px; padding: 0 4px; letter-spacing: 0.03em;
+  }
+
+  .msg-col { display: flex; flex-direction: column; }
+  .msg-row.user .msg-col { align-items: flex-end; }
+
+  .quick-replies {
+    display: flex; flex-wrap: wrap; gap: 7px;
+    padding: 4px 0 8px 36px;
+  }
+
+  .qr-btn {
+    background: transparent; border: 1px solid var(--camel);
+    color: var(--camel-dark); padding: 6px 13px; border-radius: 20px;
+    font-family: 'Jost', sans-serif; font-size: 12.5px; font-weight: 400;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.02em;
+  }
+
+  .qr-btn:hover {
+    background: var(--camel); color: white;
+    transform: translateY(-1px); box-shadow: 0 4px 12px rgba(196,149,106,0.3);
+  }
+
+  .typing-bubble {
+    background: white; border-radius: 18px; border-bottom-left-radius: 4px;
+    padding: 12px 16px; box-shadow: 0 2px 12px rgba(100,70,50,0.08);
+    display: flex; gap: 4px; align-items: center;
+  }
+
+  .typing-dot {
+    width: 6px; height: 6px; background: var(--camel); border-radius: 50%;
+    animation: typingBounce 1.2s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  .input-area {
+    padding: 12px 16px 16px;
+    background: var(--cream);
+    border-top: 1px solid rgba(196,149,106,0.12);
+    display: flex; align-items: flex-end; gap: 10px; flex-shrink: 0;
+  }
+
+  .input-wrap {
+    flex: 1; background: white;
+    border: 1.5px solid var(--sand); border-radius: 22px;
+    display: flex; align-items: center; padding: 0 16px;
+    transition: border-color 0.2s; box-shadow: 0 2px 8px rgba(100,70,50,0.06);
+  }
+
+  .input-wrap:focus-within {
+    border-color: var(--camel); box-shadow: 0 2px 16px rgba(196,149,106,0.15);
+  }
+
+  #user-input {
+    flex: 1; border: none; background: transparent;
+    padding: 11px 0; font-family: 'Jost', sans-serif;
+    font-size: 14px; font-weight: 300; color: var(--text-dark);
+    outline: none;
+  }
+
+  #user-input::placeholder { color: var(--text-light); }
+
+  .send-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--camel), var(--camel-dark));
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(196,149,106,0.4);
+  }
+
+  .send-btn:hover { transform: scale(1.06) translateY(-1px); }
+  .send-btn:active { transform: scale(0.96); }
+  .send-btn svg { width: 18px; height: 18px; fill: white; }
+
+  .date-divider {
+    display: flex; align-items: center; gap: 10px; margin: 4px 0 8px;
+  }
+  .date-divider::before, .date-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--sand);
+  }
+  .date-divider span {
+    font-size: 11px; color: var(--text-light);
+    letter-spacing: 0.06em; text-transform: uppercase; font-weight: 300;
+  }
+
+  .powered-by {
+    text-align: center; font-size: 10px; color: var(--text-light);
+    padding: 0 0 4px; letter-spacing: 0.04em; font-weight: 300;
+  }
+</style>
+</head>
+<body>
+
+<div class="chat-wrapper">
+  <div class="chat-header">
+    <div class="header-avatar">
+      C
+      <div class="online-dot"></div>
+    </div>
+    <div class="header-info">
+      <h1>Caia Home</h1>
+      <p>Asistente · Siempre disponible</p>
+    </div>
+  </div>
+
+  <div class="messages-area" id="messages">
+    <div class="date-divider"><span>Hoy</span></div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-wrap">
+      <input type="text" id="user-input" placeholder="Escribí tu consulta..." autocomplete="off" />
+    </div>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+  <p class="powered-by">Asistente de Caia Home ✦ caiahome.com.ar</p>
+</div>
+
+<script>
+let conversationHistory = [];
+
+function getTime() {
+  return new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function addMessage(text, sender, quickReplies = null) {
+  const area = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = `msg-row ${sender}`;
+
+  const col = document.createElement('div');
+  col.className = 'msg-col';
+
+  if (sender === 'bot') {
+    const avatar = document.createElement('div');
+    avatar.className = 'bot-mini-avatar';
+    avatar.textContent = 'C';
+    row.appendChild(avatar);
+  }
+
+  const bubble = document.createElement('div');
+  bubble.className = `bubble ${sender}`;
+  bubble.innerHTML = text;
+
+  const ts = document.createElement('div');
+  ts.className = 'timestamp';
+  ts.textContent = getTime();
+
+  col.appendChild(bubble);
+  col.appendChild(ts);
+  row.appendChild(col);
+  area.appendChild(row);
+
+  if (quickReplies && sender === 'bot') {
+    const qrDiv = document.createElement('div');
+    qrDiv.className = 'quick-replies';
+    quickReplies.forEach(label => {
+      const btn = document.createElement('button');
+      btn.className = 'qr-btn';
+      btn.textContent = label;
+      btn.onclick = () => { qrDiv.remove(); handleSend(label); };
+      qrDiv.appendChild(btn);
+    });
+    area.appendChild(qrDiv);
+  }
+
+  area.scrollTop = area.scrollHeight;
+}
+
+function showTyping() {
+  const area = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  row.id = 'typing-row';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'bot-mini-avatar';
+  avatar.textContent = 'C';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'typing-bubble';
+  bubble.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  area.appendChild(row);
+  area.scrollTop = area.scrollHeight;
+}
+
+function hideTyping() {
+  const row = document.getElementById('typing-row');
+  if (row) row.remove();
+}
+
+function formatReply(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+async function handleSend(text) {
+  addMessage(text, 'user');
+  conversationHistory.push({ role: 'user', content: text });
+  document.getElementById('send-btn').disabled = true;
+  showTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: conversationHistory })
+    });
+
+    const data = await res.json();
+    hideTyping();
+
+    if (data.error) {
+      addMessage('Hubo un problema. Por favor intentá de nuevo.', 'bot');
+    } else {
+      conversationHistory.push({ role: 'assistant', content: data.reply });
+      addMessage(formatReply(data.reply), 'bot');
+    }
+  } catch (err) {
+    hideTyping();
+    addMessage('Error de conexión. Revisá tu internet e intentá de nuevo.', 'bot');
+  }
+
+  document.getElementById('send-btn').disabled = false;
+  document.getElementById('user-input').focus();
+}
+
+function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  handleSend(text);
+}
+
+document.getElementById('user-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+});
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    addMessage(
+      '¡Hola! Soy <strong>Caia</strong>, la asistente de Caia Home 🌿<br><br>Puedo ayudarte con consultas sobre nuestros productos, tiempos de confección, envíos y más. ¿En qué te ayudo hoy?',
+      'bot',
+      ['Tiempos de entrega', 'Info de envíos', 'Estado de mi pedido', 'Formas de pago']
+    );
+  }, 600);
+});
+</script>
+</body>
+</html>
